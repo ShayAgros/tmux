@@ -291,6 +291,7 @@ winlink_add(struct winlinks *wwl, int idx)
 	wl = xcalloc(1, sizeof *wl);
 	wl->idx = idx;
 	RB_INSERT(winlinks, wwl, wl);
+	server_locations_changed();
 
 	return (wl);
 }
@@ -305,6 +306,7 @@ winlink_set_window(struct winlink *wl, struct window *w)
 	TAILQ_INSERT_TAIL(&w->winlinks, wl, wentry);
 	wl->window = w;
 	window_add_ref(w, __func__);
+	server_locations_changed();
 }
 
 void
@@ -319,6 +321,7 @@ winlink_remove(struct winlinks *wwl, struct winlink *wl)
 
 	RB_REMOVE(winlinks, wwl, wl);
 	free(wl);
+	server_locations_changed();
 }
 
 struct winlink *
@@ -1186,6 +1189,7 @@ window_add_pane(struct window *w, struct window_pane *other, u_int hlimit,
 		else
 			TAILQ_INSERT_AFTER(&w->panes, other, wp, entry);
 	}
+	server_locations_changed();
 	if (~flags & SPAWN_FLOATING)
 		TAILQ_INSERT_TAIL(&w->z_index, wp, zentry);
 	else if (w->modal != NULL)
@@ -1251,6 +1255,7 @@ window_remove_pane(struct window *w, struct window_pane *wp)
 	window_lost_pane(w, wp);
 	TAILQ_REMOVE(&w->panes, wp, entry);
 	TAILQ_REMOVE(&w->z_index, wp, zentry);
+	server_locations_changed();
 	redraw_invalidate_scene(w);
 	window_pane_destroy(wp);
 }
@@ -1638,6 +1643,7 @@ window_pane_destroy(struct window_pane *wp)
 
 	RB_REMOVE(window_pane_tree, &all_window_panes, wp);
 	wp->flags |= PANE_DESTROYED;
+	free(wp->location);
 	window_pane_clear_prompt(wp);
 
 	window_pane_free_modes(wp);
@@ -2574,6 +2580,7 @@ winlink_shuffle_up(struct session *s, struct winlink *wl, int before)
 		RB_REMOVE(winlinks, &s->windows, wl);
 		wl->idx++;
 		RB_INSERT(winlinks, &s->windows, wl);
+		server_locations_changed();
 	}
 
 	return (idx);

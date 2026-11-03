@@ -6746,6 +6746,19 @@ Run when a pane changes mode.
 Run when a pane enters a mode.
 .It pane\-mode\-exited
 Run when a pane exits a mode.
+.It pane\-locations\-changed
+Run once after one or more existing panes changed session name, window index
+or pane index, for example after
+.Ic swap\-pane ,
+.Ic move\-window
+or a pane closing.
+.Ql hook_moves
+holds a tab-separated list of pane ID, old and new location
+.Pq Ql session.window.pane
+for each pane that moved.
+A window linked into several sessions takes its location from the first
+session in name order.
+New panes are not listed.
 .It pane\-moved
 Run when a pane is moved to another window.
 .It pane\-prompt\-closed

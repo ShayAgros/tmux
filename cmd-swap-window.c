@@ -77,6 +77,7 @@ cmd_swap_window_exec(struct cmd *self, struct cmdq_item *item)
 	TAILQ_INSERT_TAIL(&w_src->winlinks, wl_dst, wentry);
 	wl_src->window = w_dst;
 	TAILQ_INSERT_TAIL(&w_dst->winlinks, wl_src, wentry);
+	server_locations_changed();
 
 	if (marked_pane.wl == wl_src)
 		marked_pane.wl = wl_dst;

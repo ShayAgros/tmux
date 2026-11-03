@@ -130,6 +130,7 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 		TAILQ_INSERT_HEAD(&dst_w->panes, src_wp, entry);
 	else
 		TAILQ_INSERT_AFTER(&dst_w->panes, tmp_wp, src_wp, entry);
+	server_locations_changed();
 
 	tmp_wp = TAILQ_PREV(dst_wp, window_panes, zentry);
 	TAILQ_REMOVE(&dst_w->z_index, dst_wp, zentry);

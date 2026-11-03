@@ -1376,6 +1376,8 @@ options_push_changes(const char *name)
 		}
 	}
 
+	if (strcmp(name, "pane-base-index") == 0)
+		server_locations_changed();
 	if (strcmp(name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
 			if (w->active == NULL)

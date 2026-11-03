@@ -83,6 +83,7 @@ cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 	free(s->name);
 	s->name = newname;
 	RB_INSERT(sessions, &sessions, s);
+	server_locations_changed();
 
 	server_status_session(s);
 	events_fire("session-renamed", ep);

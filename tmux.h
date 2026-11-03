@@ -1346,6 +1346,8 @@ struct visible_ranges {
 /* Child window structure. */
 struct window_pane {
 	u_int		 id;
+	char		*location;
+	u_int		 location_generation;
 	int		 references;
 	u_int		 active_point;
 
@@ -3458,6 +3460,7 @@ void	 server_destroy_pane(struct window_pane *, int);
 void	 server_destroy_session(struct session *);
 void	 server_check_unattached(void);
 void	 server_unzoom_window(struct window *);
+void	 server_locations_changed(void);
 
 /* status.c */
 void	 status_timer_start(struct client *);

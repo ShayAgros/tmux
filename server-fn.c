@@ -563,3 +563,68 @@ server_unzoom_window(struct window *w)
 	if (window_unzoom(w, 1) == 0)
 		server_redraw_window(w);
 }
+
+/* Append "%id old new" for each pane whose location changed since the last call. */
+static void
+server_locations_append_moves(struct session *s, struct winlink *wl,
+    u_int generation, char **moves)
+{
+	struct window_pane	*wp;
+	char			*location, *tmp;
+	u_int			 idx;
+
+	TAILQ_FOREACH(wp, &wl->window->panes, entry) {
+		if (wp->location_generation == generation)
+			continue;
+		wp->location_generation = generation;
+
+		window_pane_index(wp, &idx);
+		xasprintf(&location, "%s.%d.%u", s->name, wl->idx, idx);
+		if (wp->location != NULL && strcmp(wp->location, location) != 0) {
+			xasprintf(&tmp, "%s%s%%%u\t%s\t%s", *moves,
+			    **moves == '\0' ? "" : "\t", wp->id, wp->location,
+			    location);
+			free(*moves);
+			*moves = tmp;
+		}
+		free(wp->location);
+		wp->location = location;
+	}
+}
+
+static void
+server_locations_changed_cb(__unused int fd, __unused short events,
+    __unused void *arg)
+{
+	static u_int		 generation;
+	struct session		*s;
+	struct winlink		*wl;
+	struct event_payload	*ep;
+	char			*moves = xstrdup("");
+
+	generation++;
+	RB_FOREACH(s, sessions, &sessions) {
+		RB_FOREACH(wl, winlinks, &s->windows)
+			server_locations_append_moves(s, wl, generation, &moves);
+	}
+
+	if (*moves != '\0') {
+		ep = event_payload_create();
+		event_payload_set_string(ep, "moves", "%s", moves);
+		events_fire("pane-locations-changed", ep);
+	}
+	free(moves);
+}
+
+/* Fire pane-locations-changed once, after the current event is processed. */
+void
+server_locations_changed(void)
+{
+	static struct event	ev;
+	struct timeval		tv = { 0 };
+
+	if (!event_initialized(&ev))
+		evtimer_set(&ev, server_locations_changed_cb, NULL);
+	if (!evtimer_pending(&ev, NULL))
+		evtimer_add(&ev, &tv);
+}
